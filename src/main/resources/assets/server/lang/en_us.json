@@ -1,0 +1,13 @@
+{
+  "itemGroup.server": "Example Mod Tab",
+  "block.server.example_block": "Example Block",
+  "item.server.example_item": "Example Item",
+
+  "server.configuration.title": "Server  Configs",
+  "server.configuration.section.server.common.toml": "Server  Configs",
+  "server.configuration.section.server.common.toml.title": "Server  Configs",
+  "server.configuration.items": "Item List",
+  "server.configuration.logDirtBlock": "Log Dirt Block",
+  "server.configuration.magicNumberIntroduction": "Magic Number Text",
+  "server.configuration.magicNumber": "Magic Number"
+}
