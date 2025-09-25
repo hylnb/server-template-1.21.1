@@ -58,6 +58,20 @@
   "gui.servermanager.command_executed": "Executed: %s",
   "gui.servermanager.history_cleared": "Command history cleared!",
   
+  "gui.servermanager.config_buttons": "Config Buttons",
+  "gui.servermanager.config_buttons.tooltip": "Configure custom command buttons",
+  
+  "gui.servermanager.button_config.title": "Button Configuration",
+  "gui.servermanager.button_config.save": "Save",
+  "gui.servermanager.button_config.cancel": "Cancel",
+  "gui.servermanager.button_config.reset": "Reset",
+  "gui.servermanager.button_config.button_name": "Button Name",
+  "gui.servermanager.button_config.command": "Command",
+  "gui.servermanager.button_config.enabled": "Enabled",
+  "gui.servermanager.button_config.disabled": "Disabled",
+  "gui.servermanager.button_config.saved": "Button configuration saved!",
+  "gui.servermanager.button_config.reset_confirm": "Are you sure you want to reset all button configurations?",
+  
   "gui.servermanager.server_info.title": "Server Information",
   "gui.servermanager.server_name": "Server Name: %s",
   "gui.servermanager.server_ip": "Server IP: %s",

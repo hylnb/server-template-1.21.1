@@ -1,22 +1,26 @@
 package com.servermanager.ui.gui;
 
-import com.servermanager.ui.Config;
+import com.servermanager.ui.config.CustomButtonConfig;
 import com.servermanager.ui.util.CommandUtils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import java.util.List;
+
 public class PlayerManagementScreen extends Screen {
-    private static final int GUI_WIDTH = 320;
-    private static final int GUI_HEIGHT = 240;
+    private static final int GUI_WIDTH = 400;
+    private static final int GUI_HEIGHT = 250;
     
     private final Screen parent;
     private int leftPos;
     private int topPos;
-    private EditBox playerNameInput;
+    
+    // 自定义按钮相关
+    private final List<CustomButtonConfig.ButtonData> customButtons = CustomButtonConfig.getPlayerManagementButtons();
+    private int currentPage = 0;
+    private static final int BUTTONS_PER_PAGE = 5; // 每页最多5个按钮 (1行 x 5列)
 
     public PlayerManagementScreen(Screen parent) {
         super(Component.translatable("gui.servermanager.player_management.title"));
@@ -30,203 +34,79 @@ public class PlayerManagementScreen extends Screen {
         this.leftPos = (this.width - GUI_WIDTH) / 2;
         this.topPos = (this.height - GUI_HEIGHT) / 2;
 
-        // Player name input
-        this.playerNameInput = new EditBox(this.font, leftPos + 20, topPos + 40, 200, 20, 
-                Component.translatable("gui.servermanager.player_name"));
-        this.playerNameInput.setMaxLength(16);
-        this.playerNameInput.setHint(Component.translatable("gui.servermanager.player_name.hint"));
-        
-        if (Config.SHOW_TOOLTIPS.get()) {
-            this.playerNameInput.setTooltip(Tooltip.create(Component.translatable("gui.servermanager.player_name.tooltip")));
-        }
-        
-        this.addRenderableWidget(this.playerNameInput);
-        this.setInitialFocus(this.playerNameInput);
-
-        // Teleport to player
-        this.addRenderableWidget(Button.builder(
-                Component.translatable("gui.servermanager.teleport_to"),
-                button -> {
-                    String playerName = this.playerNameInput.getValue().trim();
-                    if (playerName.isEmpty()) {
-                        this.minecraft.player.displayClientMessage(
-                            Component.translatable("gui.servermanager.no_player_name"), 
-                            true
-                        );
-                        return;
-                    }
-                    executePlayerCommand(CommandUtils.getPlayerCommand("tp_to", playerName));
-                })
-                .bounds(leftPos + 20, topPos + 80, 100, 20)
-                .tooltip(Config.SHOW_TOOLTIPS.get() ? 
-                    net.minecraft.client.gui.components.Tooltip.create(
-                        Component.translatable("gui.servermanager.teleport_to.tooltip")
-                    ) : null)
-                .build());
-
-        // Teleport player to me
-        this.addRenderableWidget(Button.builder(
-                Component.translatable("gui.servermanager.teleport_here"),
-                button -> {
-                    String playerName = this.playerNameInput.getValue().trim();
-                    if (playerName.isEmpty()) {
-                        this.minecraft.player.displayClientMessage(
-                            Component.translatable("gui.servermanager.no_player_name"), 
-                            true
-                        );
-                        return;
-                    }
-                    executePlayerCommand(CommandUtils.getPlayerCommand("tp_here", playerName));
-                })
-                .bounds(leftPos + 130, topPos + 80, 100, 20)
-                .tooltip(Config.SHOW_TOOLTIPS.get() ? 
-                    net.minecraft.client.gui.components.Tooltip.create(
-                        Component.translatable("gui.servermanager.teleport_here.tooltip")
-                    ) : null)
-                .build());
-
-        // Give OP
-        this.addRenderableWidget(Button.builder(
-                Component.translatable("gui.servermanager.give_op"),
-                button -> {
-                    String playerName = this.playerNameInput.getValue().trim();
-                    if (playerName.isEmpty()) {
-                        this.minecraft.player.displayClientMessage(
-                            Component.translatable("gui.servermanager.no_player_name"), 
-                            true
-                        );
-                        return;
-                    }
-                    executePlayerCommand(CommandUtils.getPlayerCommand("op", playerName));
-                })
-                .bounds(leftPos + 20, topPos + 110, 100, 20)
-                .tooltip(Config.SHOW_TOOLTIPS.get() ? 
-                    net.minecraft.client.gui.components.Tooltip.create(
-                        Component.translatable("gui.servermanager.give_op.tooltip")
-                    ) : null)
-                .build());
-
-        // Remove OP
-        this.addRenderableWidget(Button.builder(
-                Component.translatable("gui.servermanager.remove_op"),
-                button -> {
-                    String playerName = this.playerNameInput.getValue().trim();
-                    if (playerName.isEmpty()) {
-                        this.minecraft.player.displayClientMessage(
-                            Component.translatable("gui.servermanager.no_player_name"), 
-                            true
-                        );
-                        return;
-                    }
-                    executePlayerCommand(CommandUtils.getPlayerCommand("deop", playerName));
-                })
-                .bounds(leftPos + 130, topPos + 110, 100, 20)
-                .tooltip(Config.SHOW_TOOLTIPS.get() ? 
-                    net.minecraft.client.gui.components.Tooltip.create(
-                        Component.translatable("gui.servermanager.remove_op.tooltip")
-                    ) : null)
-                .build());
-
-        // Kick player
-        this.addRenderableWidget(Button.builder(
-                Component.translatable("gui.servermanager.kick_player"),
-                button -> {
-                    String playerName = this.playerNameInput.getValue().trim();
-                    if (playerName.isEmpty()) {
-                        this.minecraft.player.displayClientMessage(
-                            Component.translatable("gui.servermanager.no_player_name"), 
-                            true
-                        );
-                        return;
-                    }
-                    executePlayerCommand(CommandUtils.getPlayerCommand("kick", playerName));
-                })
-                .bounds(leftPos + 20, topPos + 140, 100, 20)
-                .tooltip(Config.SHOW_TOOLTIPS.get() ? 
-                    net.minecraft.client.gui.components.Tooltip.create(
-                        Component.translatable("gui.servermanager.kick_player.tooltip")
-                    ) : null)
-                .build());
-
-        // Ban player
-        this.addRenderableWidget(Button.builder(
-                Component.translatable("gui.servermanager.ban_player"),
-                button -> {
-                    String playerName = this.playerNameInput.getValue().trim();
-                    if (playerName.isEmpty()) {
-                        this.minecraft.player.displayClientMessage(
-                            Component.translatable("gui.servermanager.no_player_name"), 
-                            true
-                        );
-                        return;
-                    }
-                    executePlayerCommand(CommandUtils.getPlayerCommand("ban", playerName));
-                })
-                .bounds(leftPos + 130, topPos + 140, 100, 20)
-                .tooltip(Config.SHOW_TOOLTIPS.get() ? 
-                    net.minecraft.client.gui.components.Tooltip.create(
-                        Component.translatable("gui.servermanager.ban_player.tooltip")
-                    ) : null)
-                .build());
-
-        // Add to whitelist
-        this.addRenderableWidget(Button.builder(
-                Component.translatable("gui.servermanager.whitelist_add"),
-                button -> {
-                    String playerName = this.playerNameInput.getValue().trim();
-                    if (playerName.isEmpty()) {
-                        this.minecraft.player.displayClientMessage(
-                            Component.translatable("gui.servermanager.no_player_name"), 
-                            true
-                        );
-                        return;
-                    }
-                    executePlayerCommand(CommandUtils.getPlayerCommand("whitelist_add", playerName));
-                })
-                .bounds(leftPos + 20, topPos + 170, 100, 20)
-                .tooltip(Config.SHOW_TOOLTIPS.get() ? 
-                    net.minecraft.client.gui.components.Tooltip.create(
-                        Component.translatable("gui.servermanager.whitelist_add.tooltip")
-                    ) : null)
-                .build());
-
-        // Remove from whitelist
-        this.addRenderableWidget(Button.builder(
-                Component.translatable("gui.servermanager.whitelist_remove"),
-                button -> {
-                    String playerName = this.playerNameInput.getValue().trim();
-                    if (playerName.isEmpty()) {
-                        this.minecraft.player.displayClientMessage(
-                            Component.translatable("gui.servermanager.no_player_name"), 
-                            true
-                        );
-                        return;
-                    }
-                    executePlayerCommand(CommandUtils.getPlayerCommand("whitelist_remove", playerName));
-                })
-                .bounds(leftPos + 130, topPos + 170, 100, 20)
-                .tooltip(Config.SHOW_TOOLTIPS.get() ? 
-                    net.minecraft.client.gui.components.Tooltip.create(
-                        Component.translatable("gui.servermanager.whitelist_remove.tooltip")
-                    ) : null)
-                .build());
-
         // Back button
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.servermanager.back"),
                 button -> this.minecraft.setScreen(this.parent))
-                .bounds(leftPos + 75, topPos + 200, 100, 20)
+                .bounds(leftPos + 20, topPos + 40, 80, 20)
                 .build());
-    }
-
-    private void executePlayerCommand(String command) {
-        if (Config.CONFIRM_DANGEROUS_COMMANDS.get() && CommandUtils.isDangerousCommand(command)) {
-            this.minecraft.setScreen(new ConfirmationDialog(this, command, () -> {
-                CommandUtils.sendCommandToServer(command);
-                this.minecraft.setScreen(this);
-            }));
-        } else {
-            CommandUtils.sendCommandToServer(command);
+        
+        // 配置按钮
+        this.addRenderableWidget(Button.builder(
+                Component.literal("配置按钮"),
+                button -> this.minecraft.setScreen(new ButtonConfigScreen(this, "playermanagement")))
+                .bounds(leftPos + 110, topPos + 40, 80, 20)
+                .build());
+        
+        // 添加自定义按钮 (5个一行，支持分页)
+        int buttonWidth = 70;
+        int buttonHeight = 20;
+        int buttonSpacing = 5;
+        int startX = leftPos + 20;
+        int startY = topPos + 80;
+        
+        // 计算当前页的按钮
+        int startIndex = currentPage * BUTTONS_PER_PAGE;
+        int endIndex = Math.min(startIndex + BUTTONS_PER_PAGE, customButtons.size());
+        
+        for (int i = startIndex; i < endIndex; i++) {
+            CustomButtonConfig.ButtonData buttonData = customButtons.get(i);
+            if (buttonData.isEnabled() && !buttonData.isEmpty()) {
+                int buttonIndex = i - startIndex;
+                int x = startX + buttonIndex * (buttonWidth + buttonSpacing);
+                int y = startY;
+                
+                this.addRenderableWidget(Button.builder(
+                        Component.literal(buttonData.getName()),
+                        button -> {
+                            if (!buttonData.getCommand().isEmpty()) {
+                                CommandUtils.sendCommandToServer(buttonData.getCommand());
+                            }
+                        })
+                        .bounds(x, y, buttonWidth, buttonHeight)
+                        .build());
+            }
+        }
+        
+        // 分页按钮
+        if (currentPage > 0) {
+            this.addRenderableWidget(Button.builder(
+                    Component.literal("上一页"),
+                    button -> {
+                        currentPage--;
+                        this.clearWidgets();
+                        this.init();
+                    })
+                    .bounds(leftPos + 20, topPos + 200, 60, 20)
+                    .build());
+        }
+        
+        if ((currentPage + 1) * BUTTONS_PER_PAGE < customButtons.size()) {
+            this.addRenderableWidget(Button.builder(
+                    Component.literal("下一页"),
+                    button -> {
+                        currentPage++;
+                        this.clearWidgets();
+                        this.init();
+                    })
+                    .bounds(leftPos + 90, topPos + 200, 60, 20)
+                    .build());
+        }
+        
+        // 页码信息
+        if (customButtons.size() > BUTTONS_PER_PAGE) {
+            int totalPages = (customButtons.size() + BUTTONS_PER_PAGE - 1) / BUTTONS_PER_PAGE;
+            // 页码信息将在render方法中显示
         }
     }
 
@@ -234,12 +114,15 @@ public class PlayerManagementScreen extends Screen {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         
-        // Draw background panel
-        guiGraphics.fill(leftPos, topPos, leftPos + GUI_WIDTH, topPos + GUI_HEIGHT, 0xC0101010);
-        guiGraphics.fill(leftPos + 1, topPos + 1, leftPos + GUI_WIDTH - 1, topPos + GUI_HEIGHT - 1, 0xC0C0C0C0);
-        
         // Draw title
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, topPos + 10, 0xFFFFFF);
+        
+        // 显示页码信息
+        if (customButtons.size() > BUTTONS_PER_PAGE) {
+            int totalPages = (customButtons.size() + BUTTONS_PER_PAGE - 1) / BUTTONS_PER_PAGE;
+            String pageInfo = String.format("第 %d/%d 页", currentPage + 1, totalPages);
+            guiGraphics.drawCenteredString(this.font, Component.literal(pageInfo), leftPos + GUI_WIDTH / 2, topPos + 230, 0xFFFFFF);
+        }
         
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }

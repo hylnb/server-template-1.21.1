@@ -1,31 +1,27 @@
 package com.servermanager.ui.gui;
 
-import com.servermanager.ui.Config;
+import com.servermanager.ui.config.CustomButtonConfig;
 import com.servermanager.ui.util.CommandUtils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Checkbox;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.GameRules;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameRulesScreen extends Screen {
-    private static final int GUI_WIDTH = 300;
-    private static final int GUI_HEIGHT = 240;
+    private static final int GUI_WIDTH = 400;
+    private static final int GUI_HEIGHT = 250; // 减少高度
     
     private final Screen parent;
     private int leftPos;
     private int topPos;
-    private int scrollOffset = 0;
     
-    // Store original values and current widgets
-    private final Map<String, Object> originalValues = new HashMap<>();
-    private final Map<String, Object> currentValues = new HashMap<>();
-    private final Map<String, Object> widgets = new HashMap<>();
+    // 自定义按钮相关
+    private final List<CustomButtonConfig.ButtonData> customButtons = CustomButtonConfig.getGameRulesButtons();
+    private int currentPage = 0;
+    private static final int BUTTONS_PER_PAGE = 5; // 每页最多5个按钮 (1行 x 5列)
 
     public GameRulesScreen(Screen parent) {
         super(Component.translatable("gui.servermanager.gamerules.title"));
@@ -39,132 +35,105 @@ public class GameRulesScreen extends Screen {
         this.leftPos = (this.width - GUI_WIDTH) / 2;
         this.topPos = (this.height - GUI_HEIGHT) / 2;
 
-        // Common game rules
-        createBooleanGameRule("doMobSpawning", topPos + 40);
-        createBooleanGameRule("keepInventory", topPos + 65);
-        createBooleanGameRule("doDaylightCycle", topPos + 90);
-        createBooleanGameRule("doWeatherCycle", topPos + 115);
-        createIntegerGameRule("randomTickSpeed", topPos + 140);
-        createIntegerGameRule("spawnRadius", topPos + 165);
-        createIntegerGameRule("playersSleepingPercentage", topPos + 190);
-
-        // Apply button
-        this.addRenderableWidget(Button.builder(
-                Component.translatable("gui.servermanager.apply"),
-                button -> {
-                    // Update current values from widgets before applying
-                    updateCurrentValuesFromWidgets();
-                    
-                    // Only apply changed game rules
-                    for (String ruleName : originalValues.keySet()) {
-                        Object originalValue = originalValues.get(ruleName);
-                        Object currentValue = currentValues.get(ruleName);
-                        
-                        if (!originalValue.equals(currentValue)) {
-                            String command = CommandUtils.getGameRuleCommand(ruleName, currentValue.toString());
-                            CommandUtils.sendCommandToServer(command);
-                        }
-                    }
-                    this.minecraft.setScreen(this.parent);
-                })
-                .bounds(leftPos + 20, topPos + 200, 100, 20)
-                .build());
-
         // Back button
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.servermanager.back"),
                 button -> this.minecraft.setScreen(this.parent))
-                .bounds(leftPos + 130, topPos + 200, 100, 20)
+                .bounds(leftPos + 20, topPos + 40, 80, 20)
                 .build());
-    }
-
-    private void createBooleanGameRule(String ruleName, int yPos) {
-        // Get current game rule value (for now, default to false)
-        boolean currentValue = false; // TODO: Get actual current value from server
-        originalValues.put(ruleName, currentValue);
-        currentValues.put(ruleName, currentValue);
         
-        Checkbox checkbox = Checkbox.builder(
-                Component.translatable("gamerule." + ruleName),
-                this.font
-        ).pos(leftPos + 20, yPos).selected(currentValue).build();
+        // 配置按钮
+        this.addRenderableWidget(Button.builder(
+                Component.literal("配置按钮"),
+                button -> this.minecraft.setScreen(new ButtonConfigScreen(this, "gamerules")))
+                .bounds(leftPos + 110, topPos + 40, 80, 20)
+                .build());
         
-        // Store widget reference
-        widgets.put(ruleName, checkbox);
+        // 添加自定义按钮 (5个一行，支持分页)
+        int buttonWidth = 70;
+        int buttonHeight = 20;
+        int buttonSpacing = 5;
+        int startX = leftPos + 20;
+        int startY = topPos + 80;
         
-        this.addRenderableWidget(checkbox);
-    }
-
-    private void createIntegerGameRule(String ruleName, int yPos) {
-        // Get current game rule value (for now, default to 3 for randomTickSpeed, 10 for spawnRadius)
-        int defaultValue = ruleName.equals("randomTickSpeed") ? 3 : 10;
-        originalValues.put(ruleName, defaultValue);
-        currentValues.put(ruleName, defaultValue);
-        
-        EditBox editBox = new EditBox(this.font, leftPos + 150, yPos, 100, 20, 
-                Component.translatable("gamerule." + ruleName));
-        editBox.setValue(String.valueOf(defaultValue));
-        editBox.setResponder(value -> {
-            try {
-                int intValue = Integer.parseInt(value);
-                currentValues.put(ruleName, intValue);
-            } catch (NumberFormatException e) {
-                // Invalid input, keep previous value
+        // 计算当前页的按钮
+        List<CustomButtonConfig.ButtonData> enabledButtons = new ArrayList<>();
+        for (CustomButtonConfig.ButtonData buttonData : customButtons) {
+            if (buttonData.isEnabled() && !buttonData.isEmpty()) {
+                enabledButtons.add(buttonData);
             }
-        });
+        }
         
-        // Store widget reference
-        widgets.put(ruleName, editBox);
+        int totalPages = (int) Math.ceil((double) enabledButtons.size() / BUTTONS_PER_PAGE);
+        int startIndex = currentPage * BUTTONS_PER_PAGE;
+        int endIndex = Math.min(startIndex + BUTTONS_PER_PAGE, enabledButtons.size());
         
-        this.addRenderableWidget(editBox);
-    }
-    
-    private void updateCurrentValuesFromWidgets() {
-        for (Map.Entry<String, Object> entry : widgets.entrySet()) {
-            String ruleName = entry.getKey();
-            Object widget = entry.getValue();
+        // 显示当前页的按钮
+        for (int i = startIndex; i < endIndex; i++) {
+            CustomButtonConfig.ButtonData buttonData = enabledButtons.get(i);
+            int buttonIndex = i - startIndex;
+            int x = startX + buttonIndex * (buttonWidth + buttonSpacing);
+            int y = startY;
             
-            if (widget instanceof Checkbox) {
-                Checkbox checkbox = (Checkbox) widget;
-                currentValues.put(ruleName, checkbox.selected());
-            } else if (widget instanceof EditBox) {
-                EditBox editBox = (EditBox) widget;
-                try {
-                    int value = Integer.parseInt(editBox.getValue());
-                    currentValues.put(ruleName, value);
-                } catch (NumberFormatException e) {
-                    // Keep original value if parsing fails
-                }
+            Button customButton = Button.builder(
+                    Component.literal(buttonData.getName()),
+                    button -> {
+                        if (!buttonData.getCommand().isEmpty()) {
+                            CommandUtils.sendCommandToServer(buttonData.getCommand());
+                        }
+                    }
+            ).bounds(x, y, buttonWidth, buttonHeight).build();
+            this.addRenderableWidget(customButton);
+        }
+        
+        // 添加分页按钮
+        if (totalPages > 1) {
+            // 上一页按钮
+            if (currentPage > 0) {
+                this.addRenderableWidget(Button.builder(
+                        Component.literal("上一页"),
+                        button -> {
+                            currentPage--;
+                            this.clearWidgets();
+                            this.init();
+                        })
+                        .bounds(leftPos + 20, topPos + 200, 60, 20)
+                        .build());
+            }
+            
+            // 页码显示
+            Component pageInfo = Component.literal((currentPage + 1) + "/" + totalPages);
+            
+            // 下一页按钮
+            if (currentPage < totalPages - 1) {
+                this.addRenderableWidget(Button.builder(
+                        Component.literal("下一页"),
+                        button -> {
+                            currentPage++;
+                            this.clearWidgets();
+                            this.init();
+                        })
+                        .bounds(leftPos + 90, topPos + 200, 60, 20)
+                        .build());
             }
         }
     }
-
-    // Remove the old applyGameRules method since we now handle it in the button click
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
         
         // Draw title
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, topPos + 10, 0xFFFFFF);
         
-        // Draw labels for integer game rules at correct positions
-        // randomTickSpeed at topPos + 140, spawnRadius at topPos + 165, playersSleepingPercentage at topPos + 190
-        if (originalValues.containsKey("randomTickSpeed")) {
-            Component randomTickLabel = Component.translatable("gamerule.randomTickSpeed");
-            guiGraphics.drawString(this.font, randomTickLabel, leftPos + 20, topPos + 145, 0xFFFFFF);
+        // 显示页码信息
+        if (customButtons.size() > BUTTONS_PER_PAGE) {
+            int totalPages = (customButtons.size() + BUTTONS_PER_PAGE - 1) / BUTTONS_PER_PAGE;
+            String pageInfo = String.format("第 %d/%d 页", currentPage + 1, totalPages);
+            guiGraphics.drawCenteredString(this.font, Component.literal(pageInfo), leftPos + GUI_WIDTH / 2, topPos + 230, 0xFFFFFF);
         }
         
-        if (originalValues.containsKey("spawnRadius")) {
-            Component spawnRadiusLabel = Component.translatable("gamerule.spawnRadius");
-            guiGraphics.drawString(this.font, spawnRadiusLabel, leftPos + 20, topPos + 170, 0xFFFFFF);
-        }
-        
-        if (originalValues.containsKey("playersSleepingPercentage")) {
-            Component playersSleepingLabel = Component.translatable("gamerule.playersSleepingPercentage");
-            guiGraphics.drawString(this.font, playersSleepingLabel, leftPos + 20, topPos + 195, 0xFFFFFF);
-        }
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
