@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="256" height="256" fill="#2c2c2c" stroke="#8b8b8b" stroke-width="2"/>
+  
+  <!-- Title bar -->
+  <rect x="2" y="2" width="252" height="20" fill="#3c3c3c"/>
+  
+  <!-- Main content area -->
+  <rect x="8" y="28" width="240" height="220" fill="#1e1e1e" stroke="#5a5a5a" stroke-width="1"/>
+  
+  <!-- Button slots (5 buttons) -->
+  <rect x="20" y="50" width="216" height="30" fill="#404040" stroke="#6a6a6a" stroke-width="1" rx="3"/>
+  <rect x="20" y="90" width="216" height="30" fill="#404040" stroke="#6a6a6a" stroke-width="1" rx="3"/>
+  <rect x="20" y="130" width="216" height="30" fill="#404040" stroke="#6a6a6a" stroke-width="1" rx="3"/>
+  <rect x="20" y="170" width="216" height="30" fill="#404040" stroke="#6a6a6a" stroke-width="1" rx="3"/>
+  <rect x="20" y="210" width="216" height="30" fill="#404040" stroke="#6a6a6a" stroke-width="1" rx="3"/>
+  
+  <!-- Decorative elements -->
+  <circle cx="240" cy="12" r="4" fill="#ff5555"/>
+  <circle cx="228" cy="12" r="4" fill="#ffaa00"/>
+  <circle cx="216" cy="12" r="4" fill="#55ff55"/>
+</svg>
