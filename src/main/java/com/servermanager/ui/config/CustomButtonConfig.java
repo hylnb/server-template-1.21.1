@@ -74,6 +74,9 @@ public class CustomButtonConfig {
         initializeCustomCommandsButtons();
         initializeServerInfoButtons();
         initializePlayerManagementButtons();
+        
+        // 加载保存的配置
+        ConfigManager.loadConfig();
     }
     
     private static void initializeGameRulesButtons() {
@@ -172,7 +175,7 @@ public class CustomButtonConfig {
     }
     
     /**
-     * 设置按钮配置
+     * 设置按钮配置并保存到文件
      */
     public static void setButtonData(String screenType, int index, String name, String command, boolean enabled) {
         if (index < 0 || index >= BUTTONS_PER_COMMAND_SET) return;
@@ -183,6 +186,9 @@ public class CustomButtonConfig {
             button.setName(name);
             button.setCommand(command);
             button.setEnabled(enabled);
+            
+            // 保存配置到文件
+            ConfigManager.saveConfig();
         }
     }
     
@@ -205,13 +211,16 @@ public class CustomButtonConfig {
     }
     
     /**
-     * 重置所有按钮配置
+     * 重置所有按钮配置并保存
      */
     public static void resetAllButtons() {
         resetButtons(gameRulesButtons);
         resetButtons(customCommandsButtons);
         resetButtons(serverInfoButtons);
         resetButtons(playerManagementButtons);
+        
+        // 保存重置后的配置
+        ConfigManager.saveConfig();
     }
     
     private static void resetButtons(List<ButtonData> buttons) {

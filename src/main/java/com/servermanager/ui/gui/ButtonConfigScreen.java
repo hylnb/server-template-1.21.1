@@ -1,6 +1,7 @@
 package com.servermanager.ui.gui;
 
 import com.servermanager.ui.config.CustomButtonConfig;
+import com.servermanager.ui.config.ConfigManager;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -143,6 +144,10 @@ public class ButtonConfigScreen extends Screen {
                     buttonData.setCommand("");
                     buttonData.setEnabled(false);
                 }
+                
+                // 保存重置后的配置
+                ConfigManager.saveConfig();
+                
                 this.clearWidgets();
                 this.init();
             }
@@ -160,6 +165,9 @@ public class ButtonConfigScreen extends Screen {
             buttonData.setName(nameBoxes.get(i).getValue());
             buttonData.setCommand(commandBoxes.get(i).getValue());
         }
+        
+        // 保存配置到文件
+        ConfigManager.saveConfig();
     }
     
     @Override
